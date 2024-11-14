@@ -78,8 +78,14 @@ impl<I> TransmitStreamer<'_, I> {
         &mut self,
         buffers: &[&[I]],
         timeout: f64,
+        metadata: Option<TransmitMetadata>,
     ) -> Result<TransmitMetadata, Error> {
-        let mut metadata = TransmitMetadata::default();
+        let mut metadata = if let Some(metadata_inner) = metadata {
+            metadata_inner
+        } else {
+            TransmitMetadata::default()
+        };
+
         let mut samples_transmitted = 0usize;
 
         // Initialize buffer_pointers
@@ -119,7 +125,7 @@ impl<I> TransmitStreamer<'_, I> {
     /// transmits samples on a single channel with a timeout of 0.1 seconds and
     /// one_packet disabled
     pub fn transmit_simple(&mut self, buffer: &[I]) -> Result<TransmitMetadata, Error> {
-        self.transmit(&[buffer], 0.1)
+        self.transmit(&[buffer], 0.1, None)
     }
 }
 
