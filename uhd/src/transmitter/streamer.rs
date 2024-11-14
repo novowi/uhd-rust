@@ -76,7 +76,7 @@ impl<I> TransmitStreamer<'_, I> {
     /// the number of samples actually transmitd.
     pub fn transmit(
         &mut self,
-        buffers: &mut [&[I]],
+        buffers: &[&[I]],
         timeout: f64,
     ) -> Result<TransmitMetadata, Error> {
         let mut metadata = TransmitMetadata::default();
@@ -97,7 +97,7 @@ impl<I> TransmitStreamer<'_, I> {
         let buffer_length = check_equal_buffer_lengths(buffers);
 
         // Copy buffer pointers into C-compatible form
-        for (entry, buffer) in self.buffer_pointers.iter_mut().zip(buffers.iter_mut()) {
+        for (entry, buffer) in self.buffer_pointers.iter_mut().zip(buffers.iter()) {
             *entry = buffer.as_ptr() as *mut c_void;
         }
 
@@ -118,8 +118,8 @@ impl<I> TransmitStreamer<'_, I> {
 
     /// transmits samples on a single channel with a timeout of 0.1 seconds and
     /// one_packet disabled
-    pub fn transmit_simple(&mut self, buffer: &mut [I]) -> Result<TransmitMetadata, Error> {
-        self.transmit(&mut [buffer], 0.1)
+    pub fn transmit_simple(&mut self, buffer: &[I]) -> Result<TransmitMetadata, Error> {
+        self.transmit(&[buffer], 0.1)
     }
 }
 

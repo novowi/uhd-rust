@@ -49,7 +49,7 @@ where
 
 /// Checks that all provided buffers have the same length. Returns the length of the buffers,
 /// or 0 if there are no buffers. Panics if the buffer lengths are not equal.
-pub(crate) fn check_equal_buffer_lengths<I, T>(buffers: &mut [T]) -> usize
+pub(crate) fn check_equal_buffer_lengths<I, T>(buffers: &[T]) -> usize
 where
     T: core::borrow::Borrow<[I]>,
 {
