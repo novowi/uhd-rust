@@ -64,6 +64,22 @@ impl<I> TransmitStreamer<'_, I> {
         num_channels
     }
 
+    /// Returns the maximum number of samples per buffer per packet.
+    ///
+    /// This information can be useful when using burst mode to determine which packet
+    /// should mark the end of burst marker in transmit metadata.
+    pub fn max_num_samps_per_buffer(&self) -> usize {
+        let mut num_samps_per_buffer = 0usize;
+        check_status(unsafe {
+            uhd_sys::uhd_tx_streamer_max_num_samps(
+                self.handle,
+                &mut num_samps_per_buffer as *mut usize as *mut _,
+            )
+        })
+        .unwrap();
+        num_samps_per_buffer
+    }
+
     /// transmits samples from the USRP
     ///
     /// buffers: One or more buffers (one per channel) containing sample to transmit. All
