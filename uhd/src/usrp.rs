@@ -310,6 +310,23 @@ impl Usrp {
         })?;
         Ok(vector.into())
     }
+
+    /// Returns the current time source
+    pub fn get_time_source(&self, mboard: usize) -> Result<String, Error> {
+        copy_string(|buffer, length| unsafe {
+            uhd_sys::uhd_usrp_get_time_source(self.0, mboard as _, buffer, length as _)
+        })
+    }
+
+    /// Returns the available time sources
+    pub fn get_time_sources(&self, mboard: usize) -> Result<Vec<String>, Error> {
+        let mut vector = StringVector::new()?;
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_get_time_sources(self.0, mboard as _, vector.handle_mut())
+        })?;
+        Ok(vector.into())
+    }
+
     /// Returns the available sensors on the motherboard
     pub fn get_mboard_sensor_names(&self, mboard: usize) -> Result<Vec<String>, Error> {
         let mut vector = StringVector::new()?;
@@ -613,9 +630,19 @@ impl Usrp {
     /// Returns the current clock source
     pub fn set_clock_source(&self, source: &str, mboard: usize) -> Result<(), Error> {
         let source = CString::new(source)?;
-        check_status(unsafe { uhd_sys::uhd_usrp_set_clock_source(self.0, source.as_ptr(), mboard as _) })
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_set_clock_source(self.0, source.as_ptr(), mboard as _)
+        })
     }
-    
+
+    /// Returns the current time source
+    pub fn set_time_source(&self, source: &str, mboard: usize) -> Result<(), Error> {
+        let source = CString::new(source)?;
+        check_status(unsafe {
+            uhd_sys::uhd_usrp_set_time_source(self.0, source.as_ptr(), mboard as _)
+        })
+    }
+
     /// Enables or disables the receive automatic gain control
     pub fn set_rx_agc_enabled(&mut self, enabled: bool, channel: usize) -> Result<(), Error> {
         check_status(unsafe { uhd_sys::uhd_usrp_set_rx_agc(self.0, enabled, channel as _) })
