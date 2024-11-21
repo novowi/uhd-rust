@@ -12,9 +12,52 @@ pub struct TransmitMetadata {
     samples: usize,
 }
 
+/// Specification for bursts when they are in use.
+#[derive(Debug, Clone)]
+pub struct BurstSpec {
+    /// Start of a burst
+    pub start: bool,
+    /// End of a burst
+    pub end: bool,
+}
+
 impl TransmitMetadata {
-    pub fn new() -> Self {
-        Default::default()
+    /// Create new TransmitMetadata
+    ///
+    /// # Arguments
+    /// * `burst_spec`: required start and end of burst markers. Note that
+    ///                 while bursts are not required to be used, the underlying
+    ///                 UHD library requires these values to be set, and therefore
+    ///                 we must require these values from the caller.
+    /// * `time_spec`: optional time at which to begin a transmission
+    pub fn new(burst_spec: BurstSpec, time_spec: Option<TimeSpec>) -> Self {
+        // Initialize a tx_metadata handle in the underlying library
+        let mut handle: uhd_sys::uhd_tx_metadata_handle = ptr::null_mut();
+
+        // If a time spec is provided, set it. It acts as a time marker for the USRP
+        // to know when to begin the transmission.
+        let has_time_spec = time_spec.is_some();
+        let (full_secs, frac_secs) = if let Some(time_spec) = time_spec {
+            (time_spec.seconds, time_spec.fraction)
+        } else {
+            (Default::default(), Default::default())
+        };
+
+        // Create the tx_metadata. Note that this is our only chance to set the values given
+        // the current FFI bindings. If you want to change any of these values, you need to
+        // create new TransmitMetadata.
+        check_status(unsafe {
+            uhd_sys::uhd_tx_metadata_make(
+                &mut handle,
+                has_time_spec,
+                full_secs,
+                frac_secs,
+                burst_spec.start,
+                burst_spec.end,
+            )
+        })
+        .unwrap();
+        TransmitMetadata { handle, samples: 0 }
     }
 
     /// Returns the timestamp of (the first?) of the transmitted samples, according to the USRP's
