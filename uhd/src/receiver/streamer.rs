@@ -129,6 +129,19 @@ impl<I> ReceiveStreamer<I> {
     pub fn receive_simple(&mut self, buffer: &mut [I]) -> Result<ReceiveMetadata> {
         self.receive(&mut [buffer], 0.1, false)
     }
+
+    /// Gets the max number of samples per buffer per packet.
+    pub fn get_max_num_samps(&self) -> usize {
+        let mut max_num_samps = 0usize;
+        check_status(unsafe {
+            uhd_sys::uhd_rx_streamer_max_num_samps(
+                self.handle,
+                &mut max_num_samps as *mut usize as *mut _,
+            )
+        })
+        .unwrap();
+        max_num_samps
+    }
 }
 
 impl<I> Drop for ReceiveStreamer<I> {
