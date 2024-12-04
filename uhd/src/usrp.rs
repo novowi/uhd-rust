@@ -512,7 +512,7 @@ impl Usrp {
     pub fn get_rx_stream<I>(
         &mut self,
         args: &StreamArgs<I>,
-    ) -> Result<ReceiveStreamer<'_, I>, Error>
+    ) -> Result<ReceiveStreamer<I>, Error>
     where
         I: Item,
     {
@@ -547,7 +547,7 @@ impl Usrp {
     pub fn get_tx_stream<I>(
         &mut self,
         args: &StreamArgs<I>,
-    ) -> Result<TransmitStreamer<'_, I>, Error>
+    ) -> Result<TransmitStreamer<I>, Error>
     where
         I: Item,
     {

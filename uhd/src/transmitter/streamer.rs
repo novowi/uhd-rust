@@ -4,7 +4,6 @@ use std::ptr;
 
 use crate::{
     error::{check_status, Error},
-    usrp::Usrp,
     utils::check_equal_buffer_lengths,
     TransmitMetadata,
 };
@@ -13,7 +12,7 @@ use crate::{
 ///
 /// The type parameter I is the type of sample that this streamer transmits.
 #[derive(Debug)]
-pub struct TransmitStreamer<'usrp, I> {
+pub struct TransmitStreamer<I> {
     /// Streamer handle
     handle: uhd_sys::uhd_tx_streamer_handle,
 
@@ -23,13 +22,11 @@ pub struct TransmitStreamer<'usrp, I> {
     /// Invariant: If this is not empty, its length is equal to the value returned by
     /// self.num_channels().
     buffer_pointers: Vec<*const c_void>,
-    /// Link to the USRP that this streamer is associated with
-    usrp: PhantomData<&'usrp Usrp>,
     /// Item type phantom data
     item_phantom: PhantomData<I>,
 }
 
-impl<I> TransmitStreamer<'_, I> {
+impl<I> TransmitStreamer<I> {
     /// Creates a transmit streamer with a null streamer handle (for internal use only)
     ///
     /// After creating a streamer with this function, its streamer handle must be initialized.
@@ -37,7 +34,6 @@ impl<I> TransmitStreamer<'_, I> {
         TransmitStreamer {
             handle: ptr::null_mut(),
             buffer_pointers: Vec::new(),
-            usrp: PhantomData,
             item_phantom: PhantomData,
         }
     }
@@ -145,7 +141,7 @@ impl<I> TransmitStreamer<'_, I> {
     }
 }
 
-impl<I> Drop for TransmitStreamer<'_, I> {
+impl<I> Drop for TransmitStreamer<I> {
     fn drop(&mut self) {
         let _ = unsafe { uhd_sys::uhd_tx_streamer_free(&mut self.handle) };
     }
@@ -155,5 +151,5 @@ impl<I> Drop for TransmitStreamer<'_, I> {
 // All functions are thread-safe, except that the uhd_tx_streamer send(), uhd_tx_streamer recv(), and
 // uhd_tx_streamer recv_async_msg() functions. The corresponding Rust wrapper functions take &mut
 // self, which enforces single-thread access.
-unsafe impl<I> Send for TransmitStreamer<'_, I> {}
-unsafe impl<I> Sync for TransmitStreamer<'_, I> {}
+unsafe impl<I> Send for TransmitStreamer<I> {}
+unsafe impl<I> Sync for TransmitStreamer<I> {}
