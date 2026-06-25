@@ -3,8 +3,11 @@ extern crate metadeps;
 
 use std::env;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=CC");
+
     // This reads the metadata in Cargo.toml and sends Cargo the appropriate output to link the
     // libraries
     let libraries = metadeps::probe().unwrap();
@@ -31,10 +34,11 @@ fn generate_bindings(include_path: &Path) {
         // Add the include directory to ensure that #includes in the header work correctly
         .clang_arg(format!("-I{}", include_path.to_string_lossy().clone()));
 
-    // On Raspberry Pi devices, the include directories require some adjustment.
     let target = env::var("TARGET").expect("No TARGET environment variable");
-    if target == "armv7-unknown-linux-gnueabihf" {
-        builder = builder.clang_arg("-I/usr/lib/gcc/arm-linux-gnueabihf/8/include");
+    if target.contains("linux") {
+        if let Some(system_include_path) = detect_system_include_path() {
+            builder = builder.clang_arg(format!("-I{}", system_include_path.display()));
+        }
     } else if target == "aarch64-apple-darwin" {
         // On macOS Apple Silicon, boost libs from `brew install boost` are at this path
         println!("cargo:rustc-link-search=/opt/homebrew/lib/");
@@ -44,4 +48,29 @@ fn generate_bindings(include_path: &Path) {
     bindings
         .write_to_file(out_path)
         .expect("Failed to write bindings to file");
+}
+
+fn detect_system_include_path() -> Option<PathBuf> {
+    let compiler = env::var("CC").unwrap_or_else(|_| String::from("cc"));
+    let output = Command::new(&compiler)
+        .arg("-print-file-name=include")
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let include_dir = String::from_utf8(output.stdout).ok()?;
+    let include_dir = include_dir.trim();
+    if include_dir.is_empty() {
+        return None;
+    }
+
+    let include_dir = PathBuf::from(include_dir);
+    if include_dir.join("stddef.h").exists() {
+        Some(include_dir)
+    } else {
+        None
+    }
 }

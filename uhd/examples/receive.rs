@@ -30,7 +30,7 @@ pub fn main() -> Result<()> {
     let clock_source = usrp.get_clock_source(0).unwrap();
     println!("Clock source: {:?}", clock_source);
     assert_eq!(clock_source, "internal");
-        
+
     usrp.set_rx_sample_rate(1e6, CHANNEL)?;
     usrp.set_rx_antenna("TX/RX", CHANNEL)?;
     usrp.set_rx_frequency(&TuneRequest::with_frequency(2.4e9), CHANNEL)?;
